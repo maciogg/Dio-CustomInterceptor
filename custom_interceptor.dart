@@ -1,4 +1,10 @@
-
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class CustomInterceptor extends Interceptor {
   Ref ref;
@@ -23,6 +29,7 @@ class CustomInterceptor extends Interceptor {
   // ------------------------------------------------------------------------
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) async {
+    // Hide spinner
     EasyLoading.dismiss();
 
     // Auth Error Handle
@@ -62,12 +69,7 @@ class CustomInterceptor extends Interceptor {
     }
 
     // Other Errors Handle
-    // return super.onError(err, handler);
     String errorMessage = "";
-
-    debugPrint("DIO ERROR");
-    debugPrint(err.response?.statusCode.toString());
-    debugPrint(err.response?.toString());
     // ---------------- 400 ----------------
     if (err.response?.statusCode == 400) {
       errorMessage = "api_error_bad_login_credentials".tr();
@@ -91,36 +93,11 @@ class CustomInterceptor extends Interceptor {
       errorMessage = err.response?.toString().replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ') ?? "";
     }
     await AppAlert.oneButtonAlert(
-        err.requestOptions.path.substring(startupConfig.currentShop.domain.length + 1), errorMessage, 'app_done'.tr(), AlertType.none);
+        'Error', errorMessage, 'app_done'.tr(), AlertType.none);
   }
 
   // ------------------------------------------------------------------------
   Future<String> _refreshToken() async {
-    String refreshedToken;
-    var user = await SP.getUserFromStorage();
-    var params = {
-      "email": user.login,
-      "password": user.password,
-    };
-
-    try {
-      Dio dioToken = Dio();
-      dioToken.options.connectTimeout = 5000;
-      dioToken.options.receiveTimeout = 5000;
-      Response response = await dioToken.post(
-        '${startupConfig.currentShop.domain}/api/AuthTokens',
-        data: jsonEncode(params),
-      );
-      if (response.statusCode == 201) {
-        // token refreshed
-        var result = User.fromMap(response.data);
-        refreshedToken = result.token ?? "";
-        ref.read(userProvider).setToken(refreshedToken);
-        return refreshedToken;
-      }
-    } catch (e) {
-      return "";
-    }
-    return "";
+   // your refresh token function
   }
 }
